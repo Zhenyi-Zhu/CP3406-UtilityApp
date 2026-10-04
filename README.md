@@ -53,3 +53,23 @@ It provides the structure for a simple tabular UI using **Jetpack Compose** and 
 ## 📚 License
 This template is provided for educational use in CP3406.  
 Feel free to modify and extend it for your assessment.
+
+
+## App purpose
+
+RideReady helps cyclists check environmental conditions before a ride
+and practise a demo bike rental flow. The current prototype uses sample
+data and simulated rides.
+
+## Week 2 progress — 4 October 2026
+
+- Built Ride and Settings screens using Jetpack Compose.
+- Displayed sample temperature, air quality, wind and rain data.
+- Added buttons to start and end a demo ride.
+- Added a Celsius/Fahrenheit setting that updates the Ride screen.
+
+### Testing and observation
+
+Tested on the Android emulator. Starting and ending a demo ride updated
+the status and button text correctly. Changing to Fahrenheit displayed
+86.0 °F. Switching tabs preserved the active ride and selected unit.
