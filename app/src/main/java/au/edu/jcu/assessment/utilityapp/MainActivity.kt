@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -30,6 +32,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
+
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,14 +101,6 @@ fun UtilityScreen(
     isDemoRideActive: Boolean,
     onToggleDemoRide: () -> Unit
 ) {
-    val temperatureCelsius = 30.0
-    val temperature = if (useFahrenheit) {
-        temperatureCelsius * 9.0 / 5.0 + 32.0
-    } else {
-        temperatureCelsius
-    }
-    val temperatureUnit = if (useFahrenheit) "°F" else "°C"
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -113,23 +109,81 @@ fun UtilityScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text("RideReady", style = MaterialTheme.typography.headlineMedium)
-        Text("Check your environment before a ride.")
-        Text("Singapore · Sample environment data")
-        Text("Temperature: $temperature $temperatureUnit")
-        Text("Air quality: US AQI 42 (sample)")
-        Text("Wind speed: 12 km/h (sample)")
-        Text("Rain probability: 30% (sample)")
-
-        Text("Demo ride", style = MaterialTheme.typography.titleLarge)
         Text(
-            if (isDemoRideActive) "Demo ride in progress: DEMO-001"
-            else "Ready to start a demo ride."
+            "Check your environment before a ride.",
+            style = MaterialTheme.typography.bodyLarge
         )
 
-        Button(onClick = onToggleDemoRide) {
-            Text(if (isDemoRideActive) "End demo ride" else "Start demo ride")
+        EnvironmentCard(useFahrenheit = useFahrenheit)
+        DemoRideCard(
+            isDemoRideActive = isDemoRideActive,
+            onToggleDemoRide = onToggleDemoRide
+        )
+    }
+}
+
+@Composable
+private fun EnvironmentCard(useFahrenheit: Boolean) {
+    val temperatureCelsius = 30.0
+    val temperature = if (useFahrenheit) {
+        temperatureCelsius * 9.0 / 5.0 + 32.0
+    } else {
+        temperatureCelsius
+    }
+    val temperatureUnit = if (useFahrenheit) "°F" else "°C"
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Environment", style = MaterialTheme.typography.titleLarge)
+            Text(
+                "Singapore · Sample data",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Text(
+                "Temperature: $temperature $temperatureUnit",
+                style = MaterialTheme.typography.titleLarge
+            )
+            Text("Air quality: US AQI 42", style = MaterialTheme.typography.bodyLarge)
+            Text("Wind speed: 12 km/h", style = MaterialTheme.typography.bodyLarge)
+            Text("Rain probability: 30%", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                "Sample values only. Live conditions are not connected yet.",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
-        Text("Demo only: this does not rent or unlock a real bicycle.")
+    }
+}
+
+@Composable
+private fun DemoRideCard(
+    isDemoRideActive: Boolean,
+    onToggleDemoRide: () -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text("Demo ride", style = MaterialTheme.typography.titleLarge)
+            Text(
+                if (isDemoRideActive) "Demo ride in progress: DEMO-001"
+                else "Ready to start a demo ride.",
+                style = MaterialTheme.typography.bodyLarge
+            )
+            Button(
+                onClick = onToggleDemoRide,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(if (isDemoRideActive) "End demo ride" else "Start demo ride")
+            }
+            Text(
+                "Demo only: this does not rent or unlock a real bicycle.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
     }
 }
 
