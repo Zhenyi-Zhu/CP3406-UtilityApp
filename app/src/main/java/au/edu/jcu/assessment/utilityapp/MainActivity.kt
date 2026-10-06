@@ -1,12 +1,16 @@
 package au.edu.jcu.assessment.utilityapp
 
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -22,26 +26,29 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MobileTech_UtilityAppTheme {
-                UtilityApp()
-            }
+            UtilityApp()
         }
     }
 }
@@ -49,48 +56,68 @@ class MainActivity : ComponentActivity() {
 @Preview(showBackground = true)
 @Composable
 fun UtilityAppPreview() {
-    MobileTech_UtilityAppTheme {
-        UtilityApp()
-    }
+    UtilityApp()
 }
 
 @Composable
 fun UtilityApp() {
+    val systemDarkTheme = isSystemInDarkTheme()
     var selectedTab by rememberSaveable { mutableStateOf("Utility") }
-    // Both screens use this setting, so its state belongs in their parent.
+    // Shared preferences belong above both screens.
     var useFahrenheit by rememberSaveable { mutableStateOf(false) }
+    var useDarkTheme by rememberSaveable { mutableStateOf(systemDarkTheme) }
     var isDemoRideActive by rememberSaveable { mutableStateOf(false) }
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Ride") },
-                    label = { Text("Ride") },
-                    selected = selectedTab == "Utility",
-                    onClick = { selectedTab = "Utility" }
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                    label = { Text("Settings") },
-                    selected = selectedTab == "Settings",
-                    onClick = { selectedTab = "Settings" }
-                )
+    UpdateSystemBarIcons(useDarkTheme = useDarkTheme)
+
+    MobileTech_UtilityAppTheme(darkTheme = useDarkTheme) {
+        Scaffold(
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Ride") },
+                        label = { Text("Ride") },
+                        selected = selectedTab == "Utility",
+                        onClick = { selectedTab = "Utility" }
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                        label = { Text("Settings") },
+                        selected = selectedTab == "Settings",
+                        onClick = { selectedTab = "Settings" }
+                    )
+                }
+            }
+        ) { innerPadding ->
+            Box(modifier = Modifier.padding(innerPadding)) {
+                when (selectedTab) {
+                    "Utility" -> UtilityScreen(
+                        useFahrenheit = useFahrenheit,
+                        isDemoRideActive = isDemoRideActive,
+                        onToggleDemoRide = { isDemoRideActive = !isDemoRideActive }
+                    )
+                    "Settings" -> SettingsScreen(
+                        useFahrenheit = useFahrenheit,
+                        useDarkTheme = useDarkTheme,
+                        onUnitChange = { useFahrenheit = it },
+                        onThemeChange = { useDarkTheme = it }
+                    )
+                }
             }
         }
-    ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            when (selectedTab) {
-                "Utility" -> UtilityScreen(
-                    useFahrenheit = useFahrenheit,
-                    isDemoRideActive = isDemoRideActive,
-                    onToggleDemoRide = { isDemoRideActive = !isDemoRideActive }
-                )
-                "Settings" -> SettingsScreen(
-                    useFahrenheit = useFahrenheit,
-                    onUnitChange = { useFahrenheit = it }
-                )
-            }
+    }
+}
+
+@Composable
+private fun UpdateSystemBarIcons(useDarkTheme: Boolean) {
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
+            // Match the system icons to the app's selected theme.
+            val controller = WindowCompat.getInsetsController(window, view)
+            controller.isAppearanceLightStatusBars = !useDarkTheme
+            controller.isAppearanceLightNavigationBars = !useDarkTheme
         }
     }
 }
@@ -190,7 +217,9 @@ private fun DemoRideCard(
 @Composable
 fun SettingsScreen(
     useFahrenheit: Boolean,
-    onUnitChange: (Boolean) -> Unit
+    useDarkTheme: Boolean,
+    onUnitChange: (Boolean) -> Unit,
+    onThemeChange: (Boolean) -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -200,11 +229,77 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text("Settings", style = MaterialTheme.typography.headlineMedium)
-        Text("Temperature unit", style = MaterialTheme.typography.titleLarge)
-        Text(if (useFahrenheit) "Current unit: Fahrenheit (°F)" else "Current unit: Celsius (°C)")
-        Button(onClick = { onUnitChange(!useFahrenheit) }) {
-            Text(if (useFahrenheit) "Use Celsius" else "Use Fahrenheit")
+        Text(
+            "Choose how RideReady looks and displays temperature.",
+            style = MaterialTheme.typography.bodyLarge
+        )
+
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(vertical = 8.dp)
+            ) {
+                Text(
+                    "Preferences",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.titleLarge
+                )
+                PreferenceSwitchRow(
+                    title = "Use Fahrenheit",
+                    description = if (useFahrenheit) {
+                        "Current unit: Fahrenheit (°F)"
+                    } else {
+                        "Current unit: Celsius (°C)"
+                    },
+                    checked = useFahrenheit,
+                    onCheckedChange = onUnitChange
+                )
+                PreferenceSwitchRow(
+                    title = "Dark theme",
+                    description = if (useDarkTheme) {
+                        "Current appearance: Dark"
+                    } else {
+                        "Current appearance: Light"
+                    },
+                    checked = useDarkTheme,
+                    onCheckedChange = onThemeChange
+                )
+            }
         }
-        Text("Return to Ride to see the temperature in your selected unit.")
+
+        Text(
+            "Changes apply immediately. Return to Ride to view your preferences.",
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+private fun PreferenceSwitchRow(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .toggleable(
+                value = checked,
+                role = Role.Switch,
+                onValueChange = onCheckedChange
+            )
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(description, style = MaterialTheme.typography.bodyMedium)
+        }
+        // The parent row handles taps and provides a single accessible control.
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
