@@ -59,10 +59,32 @@ fun UtilityAppPreview() {
     UtilityApp()
 }
 
+@Preview(
+    name = "Ride - small phone",
+    showBackground = true,
+    widthDp = 320,
+    heightDp = 568
+)
 @Composable
-fun UtilityApp() {
+fun RideSmallScreenPreview() {
+    UtilityApp()
+}
+
+@Preview(
+    name = "Settings - small phone",
+    showBackground = true,
+    widthDp = 320,
+    heightDp = 568
+)
+@Composable
+fun SettingsSmallScreenPreview() {
+    UtilityApp(initialTab = "Settings")
+}
+
+@Composable
+fun UtilityApp(initialTab: String = "Utility") {
     val systemDarkTheme = isSystemInDarkTheme()
-    var selectedTab by rememberSaveable { mutableStateOf("Utility") }
+    var selectedTab by rememberSaveable { mutableStateOf(initialTab) }
     // Shared preferences belong above both screens.
     var useFahrenheit by rememberSaveable { mutableStateOf(false) }
     var useDarkTheme by rememberSaveable { mutableStateOf(systemDarkTheme) }

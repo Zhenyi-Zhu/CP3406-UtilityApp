@@ -61,17 +61,15 @@ Design observation: cards separate information from the ride action. Sample data
 Testing: checked temperature conversion in both directions, light and dark themes on both screens, and tapping both the switches and their text rows. Settings changes preserved the active ride. Ending the ride restored the ready state.
 Design observation: each setting shows its current value in text as well as the switch position. Colours follow the Material theme. The dark Ride screen displayed readable text and light status bar icons.
 
-### Plan for 7 October
+### larger text and small-screen checks
 
-Check larger text, a smaller screen, navigation and button behaviour. Record observations and any fixes.
+- Added 320 × 568 dp previews for the Ride and Settings screens.
+- Checked both screens with the maximum system font size on the Android emulator.
+- Checked scrolling, navigation, demo ride buttons and temperature settings.
 
-## Planned extensions
+With larger text, content wrapped correctly and remained accessible by scrolling. The demo ride buttons and Settings controls worked correctly.
+In the small-screen previews, visible text stayed within the cards and both switches fitted within the Settings screen. Interactive testing confirmed that scrolling reached the demo ride buttons, starting and ending a ride updated the state, and selecting Fahrenheit displayed 86.0 °F on the Ride screen.
 
-- Introduce a ViewModel and repository.
-- Store preferences permanently.
-- Connect environmental data using Retrofit.
-- Add QR scanning for the simulated bike rental flow.
+### Design observation
 
-## Template attribution
-
-This project started from the lecturer's MobileTech Utility App template, provided for educational use in CP3406.
+Flexible card heights and scrolling accommodated larger text and a smaller viewport. No layout fixes were needed for the configurations checked.
