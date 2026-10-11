@@ -22,13 +22,12 @@ Environmental values are sample data. The app does not rent or unlock a real bic
 
 ## Code structure
 
-- `UtilityApp()`: shared state, selected theme and bottom navigation.
-- `UtilityScreen()`: the Ride screen.
-- `EnvironmentCard()`: sample environmental information.
-- `DemoRideCard()`: ride status and start/end button.
-- `SettingsScreen()`: temperature and appearance preferences.
-- `PreferenceSwitchRow()`: a labelled, tappable switch row.
-- `UpdateSystemBarIcons()`: system icon appearance for the selected theme.
+- `MainActivity.kt`: obtains sample data and starts the Compose UI.
+- `ui/RideReadyApp.kt`: shared state, theme, bottom navigation and previews.
+- `ui/screens/RideScreen.kt`: environmental information and demo ride controls.
+- `ui/screens/SettingsScreen.kt`: temperature and appearance preferences.
+- `data/EnvironmentData.kt`: the environmental data model.
+- `data/EnvironmentRepository.kt`: the repository interface and sample implementation.
 
 ## Week 2 progress
 
@@ -73,3 +72,35 @@ In the small-screen previews, visible text stayed within the cards and both swit
 ### Design observation
 
 Flexible card heights and scrolling accommodated larger text and a smaller viewport. No layout fixes were needed for the configurations checked.
+
+## Week 4 daily development
+
+### separate data and screens
+
+- Added an EnvironmentData model and an EnvironmentRepository interface.
+- Centralised sample environmental values in SampleEnvironmentRepository.
+- Moved Ride and Settings into separate screen files.
+- Moved navigation, shared state, theme handling and previews into RideReadyApp.
+- Simplified MainActivity to obtain sample data and start the UI.
+
+### Testing and observation
+
+Tested the refactored app on the Android emulator. Temperature switched correctly between 30.0 °C and 86.0 °F. Starting a demo ride, changing units and theme, and switching tabs preserved the active ride. Ending the ride restored the ready state.
+
+### Architecture observation
+
+The Ride screen now receives environmental data instead of defining sample values inside its cards. This gives data access a separate responsibility and prepares the app for a different data source.
+
+Shared state still uses rememberSaveable in RideReadyApp. The next step is to review this state and introduce a ViewModel.
+
+## Planned extensions
+
+- Introduce a ViewModel and observable UI state.
+- Add tests for state-management logic.
+- Connect live environmental data.
+- Add QR scanning for the simulated rental flow.
+- Store preferences permanently.
+
+## Template attribution
+
+This project started from the lecturer's MobileTech Utility App template, provided for educational use in CP3406.
