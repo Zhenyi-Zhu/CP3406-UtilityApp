@@ -16,89 +16,64 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
-import au.edu.jcu.assessment.utilityapp.data.EnvironmentData
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import au.edu.jcu.assessment.utilityapp.data.SampleEnvironmentRepository
 import au.edu.jcu.assessment.utilityapp.ui.screens.RideScreen
 import au.edu.jcu.assessment.utilityapp.ui.screens.SettingsScreen
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 
-@Preview(showBackground = true)
 @Composable
-fun RideReadyAppPreview() {
-    RideReadyApp(
-        environment = SampleEnvironmentRepository().getEnvironment()
-    )
-}
+fun RideReadyRoute() {
+    val systemDarkTheme = isSystemInDarkTheme()
+    val factory = remember(systemDarkTheme) {
+        RideReadyViewModel.factory(
+            repository = SampleEnvironmentRepository(),
+            initialDarkTheme = systemDarkTheme
+        )
+    }
+    val rideReadyViewModel: RideReadyViewModel = viewModel(factory = factory)
+    val uiState by rideReadyViewModel.uiState.collectAsStateWithLifecycle()
 
-@Preview(
-    name = "Ride - small phone",
-    showBackground = true,
-    widthDp = 320,
-    heightDp = 568
-)
-@Composable
-fun RideSmallScreenPreview() {
     RideReadyApp(
-        environment = SampleEnvironmentRepository().getEnvironment()
-    )
-}
-
-@Preview(
-    name = "Settings - small phone",
-    showBackground = true,
-    widthDp = 320,
-    heightDp = 568
-)
-@Composable
-fun SettingsSmallScreenPreview() {
-    RideReadyApp(
-        environment = SampleEnvironmentRepository().getEnvironment(),
-        initialTab = "Settings"
+        uiState = uiState,
+        onUnitChange = rideReadyViewModel::setUseFahrenheit,
+        onThemeChange = rideReadyViewModel::setUseDarkTheme,
+        onToggleDemoRide = rideReadyViewModel::toggleDemoRide
     )
 }
 
 @Composable
 fun RideReadyApp(
-    environment: EnvironmentData,
+    uiState: RideReadyUiState,
+    onUnitChange: (Boolean) -> Unit,
+    onThemeChange: (Boolean) -> Unit,
+    onToggleDemoRide: () -> Unit,
     initialTab: String = "Utility"
 ) {
-    val systemDarkTheme = isSystemInDarkTheme()
     var selectedTab by rememberSaveable { mutableStateOf(initialTab) }
-    // Shared preferences belong above both screens.
-    var useFahrenheit by rememberSaveable { mutableStateOf(false) }
-    var useDarkTheme by rememberSaveable { mutableStateOf(systemDarkTheme) }
-    var isDemoRideActive by rememberSaveable { mutableStateOf(false) }
 
-    UpdateSystemBarIcons(useDarkTheme = useDarkTheme)
+    UpdateSystemBarIcons(useDarkTheme = uiState.useDarkTheme)
 
-    MobileTech_UtilityAppTheme(darkTheme = useDarkTheme) {
+    MobileTech_UtilityAppTheme(darkTheme = uiState.useDarkTheme) {
         Scaffold(
             bottomBar = {
                 NavigationBar {
                     NavigationBarItem(
-                        icon = {
-                            Icon(
-                                Icons.Default.Home,
-                                contentDescription = "Ride"
-                            )
-                        },
+                        icon = { Icon(Icons.Default.Home, contentDescription = "Ride") },
                         label = { Text("Ride") },
                         selected = selectedTab == "Utility",
                         onClick = { selectedTab = "Utility" }
                     )
                     NavigationBarItem(
-                        icon = {
-                            Icon(
-                                Icons.Default.Settings,
-                                contentDescription = "Settings"
-                            )
-                        },
+                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
                         label = { Text("Settings") },
                         selected = selectedTab == "Settings",
                         onClick = { selectedTab = "Settings" }
@@ -109,18 +84,17 @@ fun RideReadyApp(
             Box(modifier = Modifier.padding(innerPadding)) {
                 when (selectedTab) {
                     "Utility" -> RideScreen(
-                        environment = environment,
-                        useFahrenheit = useFahrenheit,
-                        isDemoRideActive = isDemoRideActive,
-                        onToggleDemoRide = {
-                            isDemoRideActive = !isDemoRideActive
-                        }
+                        environment = uiState.environment,
+                        temperature = uiState.temperature,
+                        temperatureUnit = uiState.temperatureUnit,
+                        isDemoRideActive = uiState.isDemoRideActive,
+                        onToggleDemoRide = onToggleDemoRide
                     )
                     "Settings" -> SettingsScreen(
-                        useFahrenheit = useFahrenheit,
-                        useDarkTheme = useDarkTheme,
-                        onUnitChange = { useFahrenheit = it },
-                        onThemeChange = { useDarkTheme = it }
+                        useFahrenheit = uiState.useFahrenheit,
+                        useDarkTheme = uiState.useDarkTheme,
+                        onUnitChange = onUnitChange,
+                        onThemeChange = onThemeChange
                     )
                 }
             }
@@ -133,9 +107,7 @@ private fun UpdateSystemBarIcons(useDarkTheme: Boolean) {
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as? Activity)?.window
-                ?: return@SideEffect
-
+            val window = (view.context as? Activity)?.window ?: return@SideEffect
             val controller = WindowCompat.getInsetsController(window, view)
             controller.isAppearanceLightStatusBars = !useDarkTheme
             controller.isAppearanceLightNavigationBars = !useDarkTheme
@@ -143,3 +115,53 @@ private fun UpdateSystemBarIcons(useDarkTheme: Boolean) {
     }
 }
 
+@Composable
+private fun RideReadyPreviewContent(initialTab: String = "Utility") {
+    val systemDarkTheme = isSystemInDarkTheme()
+    var uiState by remember {
+        mutableStateOf(
+            RideReadyUiState(
+                environment = SampleEnvironmentRepository().getEnvironment(),
+                useDarkTheme = systemDarkTheme
+            )
+        )
+    }
+
+    RideReadyApp(
+        uiState = uiState,
+        onUnitChange = { uiState = uiState.copy(useFahrenheit = it) },
+        onThemeChange = { uiState = uiState.copy(useDarkTheme = it) },
+        onToggleDemoRide = {
+            uiState = uiState.copy(isDemoRideActive = !uiState.isDemoRideActive)
+        },
+        initialTab = initialTab
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+fun RideReadyAppPreview() {
+    RideReadyPreviewContent()
+}
+
+@Preview(
+    name = "Ride - small phone",
+    showBackground = true,
+    widthDp = 320,
+    heightDp = 568
+)
+@Composable
+fun RideSmallScreenPreview() {
+    RideReadyPreviewContent()
+}
+
+@Preview(
+    name = "Settings - small phone",
+    showBackground = true,
+    widthDp = 320,
+    heightDp = 568
+)
+@Composable
+fun SettingsSmallScreenPreview() {
+    RideReadyPreviewContent(initialTab = "Settings")
+}

@@ -19,7 +19,8 @@ import au.edu.jcu.assessment.utilityapp.data.EnvironmentData
 @Composable
 fun RideScreen(
     environment: EnvironmentData,
-    useFahrenheit: Boolean,
+    temperature: Double,
+    temperatureUnit: String,
     isDemoRideActive: Boolean,
     onToggleDemoRide: () -> Unit
 ) {
@@ -38,7 +39,8 @@ fun RideScreen(
 
         EnvironmentCard(
             environment = environment,
-            useFahrenheit = useFahrenheit
+            temperature = temperature,
+            temperatureUnit = temperatureUnit
         )
         DemoRideCard(
             isDemoRideActive = isDemoRideActive,
@@ -50,16 +52,9 @@ fun RideScreen(
 @Composable
 private fun EnvironmentCard(
     environment: EnvironmentData,
-    useFahrenheit: Boolean
+    temperature: Double,
+    temperatureUnit: String
 ) {
-    val temperatureCelsius = environment.temperatureCelsius
-    val temperature = if (useFahrenheit) {
-        temperatureCelsius * 9.0 / 5.0 + 32.0
-    } else {
-        temperatureCelsius
-    }
-    val temperatureUnit = if (useFahrenheit) "°F" else "°C"
-
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
