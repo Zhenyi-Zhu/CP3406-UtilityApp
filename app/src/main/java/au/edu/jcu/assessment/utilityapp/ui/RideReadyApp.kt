@@ -25,7 +25,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import au.edu.jcu.assessment.utilityapp.data.NetworkEnvironmentRepository
 import au.edu.jcu.assessment.utilityapp.data.SampleEnvironmentRepository
+import au.edu.jcu.assessment.utilityapp.data.network.WeatherApiClient
 import au.edu.jcu.assessment.utilityapp.ui.screens.RideScreen
 import au.edu.jcu.assessment.utilityapp.ui.screens.SettingsScreen
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
@@ -33,12 +35,14 @@ import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
 @Composable
 fun RideReadyRoute() {
     val systemDarkTheme = isSystemInDarkTheme()
+
     val factory = remember(systemDarkTheme) {
         RideReadyViewModel.factory(
-            repository = SampleEnvironmentRepository(),
+            repository = NetworkEnvironmentRepository(WeatherApiClient.api),
             initialDarkTheme = systemDarkTheme
         )
     }
+
     val rideReadyViewModel: RideReadyViewModel = viewModel(factory = factory)
     val uiState by rideReadyViewModel.uiState.collectAsStateWithLifecycle()
 
@@ -46,7 +50,8 @@ fun RideReadyRoute() {
         uiState = uiState,
         onUnitChange = rideReadyViewModel::setUseFahrenheit,
         onThemeChange = rideReadyViewModel::setUseDarkTheme,
-        onToggleDemoRide = rideReadyViewModel::toggleDemoRide
+        onToggleDemoRide = rideReadyViewModel::toggleDemoRide,
+        onRefreshWeather = rideReadyViewModel::refreshWeather
     )
 }
 
@@ -56,9 +61,12 @@ fun RideReadyApp(
     onUnitChange: (Boolean) -> Unit,
     onThemeChange: (Boolean) -> Unit,
     onToggleDemoRide: () -> Unit,
+    onRefreshWeather: () -> Unit,
     initialTab: String = "Utility"
 ) {
-    var selectedTab by rememberSaveable { mutableStateOf(initialTab) }
+    var selectedTab by rememberSaveable {
+        mutableStateOf(initialTab)
+    }
 
     UpdateSystemBarIcons(useDarkTheme = uiState.useDarkTheme)
 
@@ -67,13 +75,21 @@ fun RideReadyApp(
             bottomBar = {
                 NavigationBar {
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Home, contentDescription = "Ride") },
+                        icon = {
+                            Icon(Icons.Default.Home, contentDescription = "Ride")
+                        },
                         label = { Text("Ride") },
                         selected = selectedTab == "Utility",
                         onClick = { selectedTab = "Utility" }
                     )
+
                     NavigationBarItem(
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                        icon = {
+                            Icon(
+                                Icons.Default.Settings,
+                                contentDescription = "Settings"
+                            )
+                        },
                         label = { Text("Settings") },
                         selected = selectedTab == "Settings",
                         onClick = { selectedTab = "Settings" }
@@ -84,12 +100,11 @@ fun RideReadyApp(
             Box(modifier = Modifier.padding(innerPadding)) {
                 when (selectedTab) {
                     "Utility" -> RideScreen(
-                        environment = uiState.environment,
-                        temperature = uiState.temperature,
-                        temperatureUnit = uiState.temperatureUnit,
-                        isDemoRideActive = uiState.isDemoRideActive,
-                        onToggleDemoRide = onToggleDemoRide
+                        uiState = uiState,
+                        onToggleDemoRide = onToggleDemoRide,
+                        onRefreshWeather = onRefreshWeather
                     )
+
                     "Settings" -> SettingsScreen(
                         useFahrenheit = uiState.useFahrenheit,
                         useDarkTheme = uiState.useDarkTheme,
@@ -105,9 +120,12 @@ fun RideReadyApp(
 @Composable
 private fun UpdateSystemBarIcons(useDarkTheme: Boolean) {
     val view = LocalView.current
+
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as? Activity)?.window ?: return@SideEffect
+            val window = (view.context as? Activity)?.window
+                ?: return@SideEffect
+
             val controller = WindowCompat.getInsetsController(window, view)
             controller.isAppearanceLightStatusBars = !useDarkTheme
             controller.isAppearanceLightNavigationBars = !useDarkTheme
@@ -118,10 +136,11 @@ private fun UpdateSystemBarIcons(useDarkTheme: Boolean) {
 @Composable
 private fun RideReadyPreviewContent(initialTab: String = "Utility") {
     val systemDarkTheme = isSystemInDarkTheme()
+
     var uiState by remember {
         mutableStateOf(
             RideReadyUiState(
-                environment = SampleEnvironmentRepository().getEnvironment(),
+                environment = SampleEnvironmentRepository.sampleData,
                 useDarkTheme = systemDarkTheme
             )
         )
@@ -129,11 +148,18 @@ private fun RideReadyPreviewContent(initialTab: String = "Utility") {
 
     RideReadyApp(
         uiState = uiState,
-        onUnitChange = { uiState = uiState.copy(useFahrenheit = it) },
-        onThemeChange = { uiState = uiState.copy(useDarkTheme = it) },
-        onToggleDemoRide = {
-            uiState = uiState.copy(isDemoRideActive = !uiState.isDemoRideActive)
+        onUnitChange = {
+            uiState = uiState.copy(useFahrenheit = it)
         },
+        onThemeChange = {
+            uiState = uiState.copy(useDarkTheme = it)
+        },
+        onToggleDemoRide = {
+            uiState = uiState.copy(
+                isDemoRideActive = !uiState.isDemoRideActive
+            )
+        },
+        onRefreshWeather = {},
         initialTab = initialTab
     )
 }

@@ -9,20 +9,27 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import au.edu.jcu.assessment.utilityapp.data.EnvironmentData
+import au.edu.jcu.assessment.utilityapp.ui.RideReadyUiState
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @Composable
 fun RideScreen(
-    environment: EnvironmentData,
-    temperature: Double,
-    temperatureUnit: String,
-    isDemoRideActive: Boolean,
-    onToggleDemoRide: () -> Unit
+    uiState: RideReadyUiState,
+    onToggleDemoRide: () -> Unit,
+    onRefreshWeather: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -31,19 +38,19 @@ fun RideScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("RideReady", style = MaterialTheme.typography.headlineMedium)
         Text(
-            "Check your environment before a ride.",
-            style = MaterialTheme.typography.bodyLarge
+            "RideReady",
+            style = MaterialTheme.typography.headlineMedium
         )
+        Text("Check your environment before a ride.")
 
         EnvironmentCard(
-            environment = environment,
-            temperature = temperature,
-            temperatureUnit = temperatureUnit
+            uiState = uiState,
+            onRefreshWeather = onRefreshWeather
         )
+
         DemoRideCard(
-            isDemoRideActive = isDemoRideActive,
+            isDemoRideActive = uiState.isDemoRideActive,
             onToggleDemoRide = onToggleDemoRide
         )
     }
@@ -51,43 +58,154 @@ fun RideScreen(
 
 @Composable
 private fun EnvironmentCard(
-    environment: EnvironmentData,
-    temperature: Double,
-    temperatureUnit: String
+    uiState: RideReadyUiState,
+    onRefreshWeather: () -> Unit
 ) {
+    val environment = uiState.environment
+
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Environment", style = MaterialTheme.typography.titleLarge)
             Text(
-                "${environment.locationName} · Sample data",
-                style = MaterialTheme.typography.bodyMedium
-            )
-            Text(
-                "Temperature: $temperature $temperatureUnit",
+                "Environment",
                 style = MaterialTheme.typography.titleLarge
             )
-            Text(
-                "Air quality: US AQI ${environment.usAqi}",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                "Wind speed: ${environment.windSpeedKmh} km/h",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                "Rain probability: ${environment.rainProbabilityPercent}%",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                "Sample values only. Live conditions are not connected yet.",
-                style = MaterialTheme.typography.bodyMedium
-            )
+
+            if (uiState.isLoading) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text(
+                    if (environment == null) {
+                        "Loading Singapore weather…"
+                    } else {
+                        "Updating weather… Previous values are shown below."
+                    }
+                )
+            }
+
+            uiState.errorMessage?.let { message ->
+                Text(
+                    message,
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                if (environment != null) {
+                    Text(
+                        "Showing previously loaded weather. Check the data time."
+                    )
+                }
+            }
+
+            if (environment != null) {
+                WeatherDetails(
+                    environment = environment,
+                    temperature = uiState.temperature,
+                    temperatureUnit = uiState.temperatureUnit
+                )
+            } else if (!uiState.isLoading) {
+                Text("No weather data available.")
+            }
+
+            OutlinedButton(
+                onClick = onRefreshWeather,
+                enabled = !uiState.isLoading,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    when {
+                        uiState.isLoading -> "Updating…"
+                        uiState.errorMessage != null -> "Retry"
+                        else -> "Refresh weather"
+                    }
+                )
+            }
         }
     }
 }
+
+@Composable
+private fun WeatherDetails(
+    environment: EnvironmentData,
+    temperature: Double?,
+    temperatureUnit: String
+) {
+    val uriHandler = LocalUriHandler.current
+
+    Text(
+        if (environment.isSample) {
+            "${environment.locationName} · Sample data"
+        } else {
+            "${environment.locationName} · Fixed location"
+        }
+    )
+
+    val temperatureText = temperature?.let {
+        String.format(Locale.ENGLISH, "%.1f", it)
+    } ?: "Unavailable"
+
+    Text(
+        "Temperature: $temperatureText $temperatureUnit",
+        style = MaterialTheme.typography.titleLarge
+    )
+
+    Text(
+        "Wind speed: " +
+                (environment.windSpeedKmh?.let { "$it km/h" } ?: "Unavailable")
+    )
+
+    Text(
+        "Rain probability: " +
+                (environment.rainProbabilityPercent?.let { "$it%" } ?: "Unavailable")
+    )
+
+    environment.rainPeriodEndEpochSeconds?.let { end ->
+        Text(
+            "Rain forecast period: ${formatWeatherTime(end - 3600)} – " +
+                    "${formatWeatherTime(end)} SGT",
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+
+    Text(
+        environment.usAqi?.let { "Air quality: US AQI $it" }
+            ?: "Air quality: not connected yet"
+    )
+
+    environment.weatherTimeEpochSeconds?.let { time ->
+        Text(
+            "Weather valid at: ${formatWeatherTime(time)} SGT",
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+
+    if (environment.isSample) {
+        Text("Sample values for preview only.")
+    } else {
+        Text(
+            "Weather values are model estimates and forecasts.",
+            style = MaterialTheme.typography.bodySmall
+        )
+
+        TextButton(
+            onClick = {
+                uriHandler.openUri("https://open-meteo.com/")
+            }
+        ) {
+            Text("Weather data: Open-Meteo")
+        }
+    }
+}
+
+private val weatherTimeFormatter = DateTimeFormatter
+    .ofPattern("dd MMM, HH:mm", Locale.ENGLISH)
+    .withZone(ZoneId.of("Asia/Singapore"))
+
+private fun formatWeatherTime(epochSeconds: Long): String =
+    weatherTimeFormatter.format(Instant.ofEpochSecond(epochSeconds))
 
 @Composable
 private fun DemoRideCard(
@@ -99,18 +217,29 @@ private fun DemoRideCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Demo ride", style = MaterialTheme.typography.titleLarge)
             Text(
-                if (isDemoRideActive) "Demo ride in progress: DEMO-001"
-                else "Ready to start a demo ride.",
-                style = MaterialTheme.typography.bodyLarge
+                "Demo ride",
+                style = MaterialTheme.typography.titleLarge
             )
+
+            Text(
+                if (isDemoRideActive) {
+                    "Demo ride in progress: DEMO-001"
+                } else {
+                    "Ready to start a demo ride."
+                }
+            )
+
             Button(
                 onClick = onToggleDemoRide,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (isDemoRideActive) "End demo ride" else "Start demo ride")
+                Text(
+                    if (isDemoRideActive) "End demo ride"
+                    else "Start demo ride"
+                )
             }
+
             Text(
                 "Demo only: this does not rent or unlock a real bicycle.",
                 style = MaterialTheme.typography.bodyMedium
