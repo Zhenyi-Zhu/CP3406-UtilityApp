@@ -128,6 +128,40 @@ ViewModel retains state across configuration changes. SavedStateHandle supports 
 
 Is keeping the selected tab in rememberSaveable while managing shared settings and ride state in the ViewModel an appropriate separation of responsibilities for this prototype?
 
+## Week 5 daily development
+
+### Network weather integration
+
+- Connected Open-Meteo weather data for a fixed Singapore location using Retrofit and Kotlin serialization.
+- Added loading indicators, refresh controls and retry on failure.
+- Preserved previously loaded weather when a refresh failed.
+- Displayed weather timestamps, the rain forecast period and source attribution.
+- Fixed a startup crash caused by a missing INTERNET permission in AndroidManifest.xml.
+
+### Asynchronous state tests
+
+- Updated the fake repository to support suspend functions.
+- Added coroutine test utilities to control asynchronous loading.
+- Expanded RideReadyViewModelTest from six to ten tests.
+- Tested loading, successful retry, failed refresh, cancellation and duplicate refresh prevention.
+- Checked that responses preserve settings and ride actions made while a request is pending.
+
+Testing: all ten ViewModel tests passed with BUILD SUCCESSFUL.
+
+Manual checks covered weather refresh, Fahrenheit and dark theme settings,
+demo ride state, connection failure and retry after restoring connectivity.
+On failure, the app displayed an error and a Retry button while retaining
+previous weather values and user settings.
+
+### Design observation
+
+Previously loaded weather remains useful during a connection failure, but
+must not appear to be freshly updated. The screen therefore keeps the data
+timestamp visible and explicitly labels previously loaded values.
+
+The unit tests use a fake repository to check state transitions independently
+of the external service. Emulator checks cover the actual network and UI flow.
+
 ## Planned extensions
 
 - Connect live environmental data with loading and error handling.
