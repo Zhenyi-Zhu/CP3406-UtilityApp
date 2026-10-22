@@ -62,6 +62,7 @@ private fun EnvironmentCard(
     onRefreshWeather: () -> Unit
 ) {
     val environment = uiState.environment
+    val airQualityMissing = environment != null && environment.usAqi == null
 
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -80,9 +81,9 @@ private fun EnvironmentCard(
 
                 Text(
                     if (environment == null) {
-                        "Loading Singapore weather…"
+                        "Loading Singapore environment data…"
                     } else {
-                        "Updating weather… Previous values are shown below."
+                        "Updating environment data… Previous values are shown below."
                     }
                 )
             }
@@ -95,9 +96,20 @@ private fun EnvironmentCard(
 
                 if (environment != null) {
                     Text(
-                        "Showing previously loaded weather. Check the data time."
+                        "Showing previously loaded data. Check the timestamps."
                     )
                 }
+            }
+
+            if (
+                airQualityMissing &&
+                !uiState.isLoading &&
+                uiState.errorMessage == null
+            ) {
+                Text(
+                    "Air quality could not be loaded. Weather is available. Tap Retry to try again.",
+                    color = MaterialTheme.colorScheme.error
+                )
             }
 
             if (environment != null) {
@@ -118,8 +130,8 @@ private fun EnvironmentCard(
                 Text(
                     when {
                         uiState.isLoading -> "Updating…"
-                        uiState.errorMessage != null -> "Retry"
-                        else -> "Refresh weather"
+                        uiState.errorMessage != null || airQualityMissing -> "Retry"
+                        else -> "Refresh environment"
                     }
                 )
             }
@@ -172,7 +184,19 @@ private fun WeatherDetails(
 
     Text(
         environment.usAqi?.let { "Air quality: US AQI $it" }
-            ?: "Air quality: not connected yet"
+            ?: "Air quality: unavailable"
+    )
+
+    environment.airQualityTimeEpochSeconds?.let { time ->
+        Text(
+            "Air quality valid at: ${formatWeatherTime(time)} SGT",
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
+
+    Text(
+        "US AQI scale; different from Singapore PSI.",
+        style = MaterialTheme.typography.bodySmall
     )
 
     environment.weatherTimeEpochSeconds?.let { time ->
@@ -186,7 +210,7 @@ private fun WeatherDetails(
         Text("Sample values for preview only.")
     } else {
         Text(
-            "Weather values are model estimates and forecasts.",
+            "Weather and air quality values are model estimates and forecasts.",
             style = MaterialTheme.typography.bodySmall
         )
 
@@ -196,6 +220,16 @@ private fun WeatherDetails(
             }
         ) {
             Text("Weather data: Open-Meteo")
+        }
+
+        TextButton(
+            onClick = {
+                uriHandler.openUri(
+                    "https://open-meteo.com/en/docs/air-quality-api"
+                )
+            }
+        ) {
+            Text("Air quality: CAMS via Open-Meteo")
         }
     }
 }

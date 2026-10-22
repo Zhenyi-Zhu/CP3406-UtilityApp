@@ -9,5 +9,6 @@ data class EnvironmentData(
     val rainProbabilityPercent: Int?,
     val weatherTimeEpochSeconds: Long? = null,
     val rainPeriodEndEpochSeconds: Long? = null,
-    val isSample: Boolean = false
+    val isSample: Boolean = false,
+    val airQualityTimeEpochSeconds: Long? = null
 )

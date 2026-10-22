@@ -31,6 +31,7 @@ import au.edu.jcu.assessment.utilityapp.data.network.WeatherApiClient
 import au.edu.jcu.assessment.utilityapp.ui.screens.RideScreen
 import au.edu.jcu.assessment.utilityapp.ui.screens.SettingsScreen
 import au.edu.jcu.assessment.utilityapp.ui.theme.MobileTech_UtilityAppTheme
+import au.edu.jcu.assessment.utilityapp.data.network.AirQualityApiClient
 
 @Composable
 fun RideReadyRoute() {
@@ -38,7 +39,10 @@ fun RideReadyRoute() {
 
     val factory = remember(systemDarkTheme) {
         RideReadyViewModel.factory(
-            repository = NetworkEnvironmentRepository(WeatherApiClient.api),
+            repository = NetworkEnvironmentRepository(
+                weatherApi = WeatherApiClient.api,
+                airQualityApi = AirQualityApiClient.api
+            ),
             initialDarkTheme = systemDarkTheme
         )
     }

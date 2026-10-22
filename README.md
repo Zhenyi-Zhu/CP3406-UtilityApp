@@ -4,26 +4,44 @@ RideReady is a CP3406 Assessment 1 utility app built with Kotlin, Jetpack Compos
 
 ## Current prototype
 
-- Sample temperature, US AQI, wind speed and rain probability.
+- Network weather and US AQI data for a fixed Singapore location.
+- Temperature, wind speed and rain probability with the forecast period.
+- Separate timestamps for weather and air quality.
+- Loading indicators, manual refresh and retry controls.
+- Previously loaded values retained when a weather refresh fails.
+- Weather remains available when only the air quality request fails.
 - Start and end a simulated ride using demo bicycle DEMO-001.
 - Fahrenheit and dark theme switches in Settings.
-- Shared settings and ride state managed by a ViewModel and StateFlow.
+- Shared settings and ride state managed by ViewModel and StateFlow.
 - SavedStateHandle support for restoring simple settings and ride state.
-- Material cards and scrollable screens.
-- Six local unit tests for state-management behaviour.
+- Material cards, scrollable screens and 14 RideReady unit tests.
 
-Environmental values are sample data. The app does not rent or unlock a real bicycle. Saved-state restoration is not permanent preference storage. QR scanning, live data and permanent storage are planned for later development.
+Environmental values are model estimates and forecasts, not direct local
+sensor measurements. The app uses US AQI, which differs from Singapore PSI.
+The location is fixed; GPS location detection is not implemented.
 
-## How to run
-
-1. Clone or download this repository.
-2. Open the project folder in Android Studio.
-3. Allow Gradle sync to finish.
-4. Run on a compatible Android emulator or physical device.
+The app does not rent or unlock a real bicycle. Saved-state restoration is
+not permanent preference storage. QR scanning and permanent storage remain
+future extensions.
 
 ## How to run the unit tests
 
-In Android Studio, open the package marked `(test)`, right-click `RideReadyViewModelTest`, and select Run. The class contains six tests and does not require an emulator.
+In Android Studio, open the package marked `(test)`. Right-click each test
+class and select Run:
+
+- `RideReadyViewModelTest`: 10 tests covering loading, preferences, ride
+  state, saved-value restoration, retry, failed refresh, duplicate requests
+  and cancellation.
+- `NetworkEnvironmentRepositoryTest`: 4 tests covering combined data,
+  separate timestamps, air quality service failure, missing or invalid air
+  quality values, and cancellation propagation.
+
+These 14 RideReady tests use fake repositories or API implementations.
+They do not require an emulator or contact the external services.
+
+Both test classes passed after the air quality integration. Emulator checks
+separately verified network data display, refresh, settings and demo ride
+controls.
 
 ## Code structure
 
@@ -36,6 +54,14 @@ In Android Studio, open the package marked `(test)`, right-click `RideReadyViewM
 - `data/EnvironmentData.kt`: the environmental data model.
 - `data/EnvironmentRepository.kt`: the repository interface and sample implementation.
 - `app/src/test/java/au/edu/jcu/assessment/utilityapp/RideReadyViewModelTest.kt`: local state-management tests using a fake repository.
+- `data/NetworkEnvironmentRepository.kt`: requests weather and air quality concurrently, validates responses and combines the results.
+- `data/network/WeatherApi.kt`: Retrofit weather endpoint.
+- `data/network/WeatherResponse.kt`: serializable weather response models.
+- `data/network/WeatherApiClient.kt`: weather client configuration.
+- `data/network/AirQualityApi.kt`: Retrofit air quality endpoint.
+- `data/network/AirQualityResponse.kt`: serializable air quality response models.
+- `data/network/AirQualityApiClient.kt`: air quality client configuration.
+- `app/src/test/java/au/edu/jcu/assessment/utilityapp/NetworkEnvironmentRepositoryTest.kt`: repository tests using fake API implementations.
 
 ## Week 2 progress
 
@@ -153,6 +179,34 @@ demo ride state, connection failure and retry after restoring connectivity.
 On failure, the app displayed an error and a Retry button while retaining
 previous weather values and user settings.
 
+### Air quality integration
+
+- Connected the Open-Meteo Air Quality API using the CAMS global model.
+- Requested weather and air quality concurrently for the same Singapore coordinates.
+- Added US AQI values and a separate air quality timestamp.
+- Added CAMS and Open-Meteo attribution.
+- Updated the refresh control to refresh both services.
+- Displayed unavailable air quality with a retry prompt when its request failed.
+- Preserved successful weather data during an air quality failure.
+- Added four repository tests using fake API implementations.
+
+Testing: all four repository tests passed. The ten ViewModel tests also
+passed after integration. On the emulator, weather and US AQI displayed
+with separate timestamps. Refresh, Fahrenheit conversion, theme switching
+and demo ride controls worked during the manual checks.
+
+The repository tests confirmed that an air quality failure does not discard
+successful weather data. Missing or invalid AQI values remain unavailable
+rather than being replaced with zero. Cancellation is propagated.
+
+Design observation: the two services can report values for different times,
+so each timestamp is displayed separately. Explicit unavailable states avoid
+presenting missing air quality information as a favourable reading.
+
+Current limitation: weather is still the primary result. If the weather
+request fails, the app retains previously loaded data when available; it
+does not independently display a new AQI result.
+
 ### Design observation
 
 Previously loaded weather remains useful during a connection failure, but
@@ -164,9 +218,10 @@ of the external service. Emulator checks cover the actual network and UI flow.
 
 ## Planned extensions
 
-- Connect live environmental data with loading and error handling.
-- Add QR scanning for the simulated rental flow.
-- Store preferences permanently.
+- Add a concise cycling environment summary with clearly explained conditions.
+- Review the completed layout with larger text and smaller screens.
+- Add QR scanning for the simulated rental flow in future development.
+- Store preferences permanently in future development.
 
 ## Template attribution
 
