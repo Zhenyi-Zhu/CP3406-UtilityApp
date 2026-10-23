@@ -44,6 +44,8 @@ fun RideScreen(
         )
         Text("Check your environment before a ride.")
 
+        RideSummaryCard(uiState = uiState)
+
         EnvironmentCard(
             uiState = uiState,
             onRefreshWeather = onRefreshWeather
