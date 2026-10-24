@@ -266,6 +266,41 @@ Together with the existing ten ViewModel tests and four repository tests, the pr
 
 The summary card displayed above the detailed environmental readings in the emulator. At the observed screen size in the light theme, its text was visible without clipping and its values matched the detailed readings.
 
+### 24 October 2026
+
+- Reviewed Ride and Settings in light and dark themes.
+- Checked the summary, expanded explanation, environmental details and demo ride controls.
+- Opened the AirNow AQI guide from the summary card.
+- Checked both screens with the emulator font size set to maximum.
+- Added screenshots documenting standard and enlarged text layouts in both themes.
+
+Testing and observation: the summary and detailed readings displayed matching environmental values. The observed 28.4 °C reading displayed as 83.1 °F after changing the temperature unit. Screenshots captured both the ready and active demo ride states.
+
+With enlarged text, summary content, timestamps and source labels wrapped within their cards. Scrolling reached the refresh and demo ride controls. Settings labels wrapped without overlapping either switch in both light and dark themes. Bottom navigation remained visible.
+
+The reminder explanation expanded successfully, and its AQI guide link opened in the browser.
+
+No layout changes were required for the configurations inspected. These checks cover the Medium Phone emulator used for testing; they do not establish compatibility with every screen size or accessibility configuration.
+
+## Interface screenshots
+
+Screenshots captured on 24 October 2026 show RideReady on the Medium Phone emulator with standard and enlarged text.
+
+### Standard text
+
+- [Ride screen in light theme](ride-light.png)
+- [Ride screen in dark theme with Fahrenheit](ride-dark.png)
+- [Active demo ride](demo-ride-active.png)
+- [Expanded reminder explanation](summary-expanded.png)
+
+### Enlarged text
+
+- [Ride screen in light theme](ride-large-light.png)
+- [Ride screen in dark theme](ride-large-dark.png)
+- [Refresh and demo ride controls](ride-large-controls.png)
+- [Settings in light theme](settings-large-light.png)
+- [Settings in dark theme](settings-large-dark.png)
+
 ## Data sources and attribution
 
 - Weather data: [Open-Meteo Weather API](https://open-meteo.com/en/docs).
@@ -292,7 +327,7 @@ SampleEnvironmentRepository supplies clearly labelled sample data for previews a
 
 ## Remaining checks and future extensions
 
-- Review the completed summary layout with larger text, smaller screens and both themes.
+- Check the final layout on a smaller screen; large-font checks on the current emulator are recorded above.
 - Complete final build, interaction and documentation checks before submission.
 - Consider QR scanning for the simulated rental flow in future development.
 - Consider permanent preference storage in future development.
