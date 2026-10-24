@@ -288,18 +288,18 @@ Screenshots captured on 24 October 2026 show RideReady on the Medium Phone emula
 
 ### Standard text
 
-- [Ride screen in light theme](ride-light.png)
-- [Ride screen in dark theme with Fahrenheit](ride-dark.png)
-- [Active demo ride](demo-ride-active.png)
-- [Expanded reminder explanation](summary-expanded.png)
+- [Ride screen in light theme](screenshots/ride-light.png)
+- [Ride screen in dark theme with Fahrenheit](screenshots/ride-dark.png)
+- [Active demo ride](screenshots/demo-ride-active.png)
+- [Expanded reminder explanation](screenshots/summary-expanded.png)
 
 ### Enlarged text
 
-- [Ride screen in light theme](ride-large-light.png)
-- [Ride screen in dark theme](ride-large-dark.png)
-- [Refresh and demo ride controls](ride-large-controls.png)
-- [Settings in light theme](settings-large-light.png)
-- [Settings in dark theme](settings-large-dark.png)
+- [Ride screen in light theme](screenshots/ride-large-light.png)
+- [Ride screen in dark theme](screenshots/ride-large-dark.png)
+- [Refresh and demo ride controls](screenshots/ride-large-controls.png)
+- [Settings in light theme](screenshots/settings-large-light.png)
+- [Settings in dark theme](screenshots/settings-large-dark.png)
 
 ## Data sources and attribution
 
